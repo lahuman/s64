@@ -1,5 +1,5 @@
 var stringify = (function(){
-var base, list, hash, toString, checkValueType, addCover;
+var base, list, hash, toString, checkValueType;
 
 //데이터 형식을 체크하여 문자열의 경우 쌍따옴표로 감쌈(")
 checkValueType = function(val){
@@ -14,10 +14,6 @@ checkValueType = function(val){
 		return '"' + val + '"';
 	}
 };
-//JSON 형태로 표출을 위하여 결과 문자열을 { } 으로 감쌈
-addCover = function(val){
-	return "{" + val + "}";
-}
 //데이터 형식이 Array 나 JSON 형식이 아닐 경우
 base = function() {
 	return addCover(checkValueType(this));
@@ -28,7 +24,7 @@ list = function() {
 	while(i--){
 		this[i] = checkValueType(toString(this[i], i));
 	} 
-	return  addCover(Array.prototype.join.call(this,','));
+	return  "[" + Array.prototype.join.call(this,',') +"]";
 };
 //데이터 형식이 JSON 형식일 경우
 hash = function() {
@@ -40,7 +36,7 @@ hash = function() {
            } 
 		}
     }
-	return addCover(result.join (','));
+	return "{" + result.join (',') + "}";
 };
 //toString을 override 하여 처리 idx가 undefined 일 경우 최초 호출을 나타냄
 toString = function(val, idx){
@@ -53,7 +49,7 @@ toString = function(val, idx){
     };
     //일반 형식의 문자가 넘어올 경우, JSON형식으로 표출 - 이 경우는 val.toString  이 호출 되지 않음
     if(typeof idx == "undefined" && typeof val != "object"){
-    	return addCover(checkValueType(val));
+    	return checkValueType(val);
     }
 	return val;
 };
@@ -61,7 +57,7 @@ return toString;
 })(); 
 
 //toString 이 호출 되거나, +'' 를 해줘야 합니다.
-console.log(stringify([1,'false', [1,"2", false, "false"],false])+''); //결과 : {1,"false",{1,"2",false,"false"},false}
-console.log(stringify({a:123123,"C":[2,"ccc",4], "B":55})+''); //결과 :  {"a":123123,"C":{2,"ccc",4},"B":55} 
-console.log(stringify("test") + ''); //결과 : {"test"}
-console.log(stringify(1234) + ''); //결과 : {1234}
+console.log(stringify([1,'false', [1,"2", false, "false"],false])+''); //결과 : [1,"false",[1,"2",false,"false"],false]
+console.log(stringify({a:123123,"C":{2:"ccc",4:"dfdf"}, "B":55, "CD":[2,"abc",4]})+''); //결과 :  {"a":123123,"C":{"2":"ccc","4":"dfdf"},"B":55,"CD":[2,3,4]}
+console.log(stringify("test") + ''); //결과 : "test"
+console.log(stringify(1234) + ''); //결과 : 1234
