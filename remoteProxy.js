@@ -1,9 +1,14 @@
 var User = function(id) {
     Object.defineProperty(this, 'id', {
         value: id
-    });
+    }, 
+    dispatch = function(ev){
+		var i = this.listener.length;
+		while(i--) this.listener[i].call(this, ev); 
+	});
     this.listener = [];
     this.que = [];
+    
 };
 Object.defineProperties(User.prototype, {
     'addListener': {
@@ -33,6 +38,7 @@ Object.defineProperties(User.prototype, {
     },
     'flush': {
         value: function() {
+        	console.log(this.que.length);
             var iter, que = this.que.slice(0),
                 i = 0,
                 j = que.length,
@@ -40,13 +46,17 @@ Object.defineProperties(User.prototype, {
             this.que.length = 0;
             iter = function() {
                 var command, data;
-                if (i) dispatch.call(self, command);
-                if (i < j) {
-                    command = que[i++];
-                    data = que[i++];
-                    //ajax.load(url[command] + self.id, iter, data);
-                    console.log(command + "/" + data);
-                } else dispatch.call(self, 'flushed');
+                do{
+                	console.log(i);
+                	
+	                if (i < j) {
+	                    command = que[i++];
+	                    data = que[i++];
+	                    //ajax.load(url[command] + self.id, iter, data);
+	                }	   
+	                dispatch.call(self, command);
+                }while(i < j);
+                dispatch.call(self, 'flushed');
             };
             iter();
         }
