@@ -48,28 +48,41 @@
                 value: function() {
                     var iter, self = this;
                     this.workque = this.workque.concat(this.que);
-
+                    console.log(this.workque);
                     this.que.length = 0;
                     iter = function() {
+
                         var command= self.workque.shift(), data = self.workque.shift();
-                        do {
-                            console.log(data);
-                            self.isRunning = true;
-                            $.ajax({
-                                url: "/"+command +"/" + self.id
-                                , data: JSON.stringify(data)
-                                , method: "POST"
-                                , async: false
-                                , contentType:"application/json"
-                                , dataType : "json"
-                            }).done(function() {
-                                console.log("OK");
-                            });
-                            command= self.workque.shift(), data = self.workque.shift();
-                            dispatch.call(self, command);
-                        }while(command && data )
-                        dispatch.call(self, 'flushed');
-                        self.isRunning = false;
+                        var sendCommand="", sendData="";
+                        self.isRunning = true;
+
+                        var ajaxCall = function(){
+                            if(sendCommand != command && sendData != data && command ) {
+
+                                console.log("call Ajax Command : " + command)
+                                $.ajax({
+                                    url: "/" + command + "/" + self.id
+                                    , data: JSON.stringify(data)
+                                    , method: "POST"
+                                    //, async: false
+                                    , contentType: "application/json"
+                                    , dataType: "json"
+                                }).complete(function (jqXHR, textStatus) {
+                                    sendCommand = command;
+                                    sendData = data;
+                                    dispatch.call(self, command);
+                                    command = self.workque.shift(), data = self.workque.shift();
+                                    console.log("Call Complete");
+                                });
+                                setTimeout(ajaxCall, 1000);
+                            }else{
+                                dispatch.call(self, 'flushed');
+                                self.isRunning = false;
+                            }
+                        }
+
+                        ajaxCall();
+
                     };
                     if(!this.isRunning)
                         iter();
