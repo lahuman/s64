@@ -1,0 +1,112 @@
+<html>
+<header>
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript">
+        var User = function(id) {
+            Object.defineProperty(this, 'id', {
+                        value: id
+                    },
+                    dispatch = function(ev){
+                        var i = this.listener.length;
+                        while(i--) this.listener[i].call(this, ev);
+                    });
+            this.listener = [];
+            this.que = [];
+            this.workque = [];
+            this.id = id;
+            this.isRunning = false;
+
+        };
+        Object.defineProperties(User.prototype, {
+            'addListener': {
+                value: function(v) {
+                    if (this.listener.indexOf(v) == -1) this.listener.push(v);
+                }
+            },
+            'create': {
+                value: function(v) {
+                    this.que.push('create', v);
+                }
+            },
+            'delete': {
+                value: function() {
+                    this.que.push('delete', null);
+                }
+            },
+            'select': {
+                value: function() {
+                    this.que.push('select', null);
+                }
+            },
+            'update': {
+                value: function(v) {
+                    this.que.push('update', v);
+                }
+            },
+            'flush': {
+                value: function() {
+                    var iter, self = this;
+                    this.workque = this.workque.concat(this.que);
+
+                    this.que.length = 0;
+                    iter = function() {
+                        var command= self.workque.shift(), data = self.workque.shift();
+                        do {
+                            console.log(data);
+                            self.isRunning = true;
+                            $.ajax({
+                                url: "/"+command +"/" + self.id
+                                , data: JSON.stringify(data)
+                                , method: "POST"
+                                , async: false
+                                , contentType:"application/json"
+                                , dataType : "json"
+                            }).done(function() {
+                                console.log("OK");
+                            });
+                            command= self.workque.shift(), data = self.workque.shift();
+                            dispatch.call(self, command);
+                        }while(command && data )
+                        dispatch.call(self, 'flushed');
+                        self.isRunning = false;
+                    };
+                    if(!this.isRunning)
+                        iter();
+                }
+            }
+        });
+
+        var hika = new User('hika');
+        hika.addListener(function(ev) {
+            console.log(ev);
+        });
+        hika.create({
+            age: 99,
+            email: "hika@xx.xx"
+        });
+        hika.update({
+            age: 100
+        });
+        hika.flush();
+        hika.delete();
+        hika.create({
+            age: 99,
+            email: 'hika@xx.xx'
+        });
+        hika.flush();
+        var lim = new User('Lim');
+        lim.create({
+            age: 99,
+            email: 'hika@xx.xx'
+        });
+        lim.update({
+            age: 18,
+            email: "lahuman@daum.net"
+        });
+        lim.flush();
+    </script>
+</header>
+<body>
+</body>
+</html>
